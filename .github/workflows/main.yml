@@ -74,6 +74,7 @@ jobs:
       ght: ${{ secrets.GHT }}
       SETUP_SSH: ${{ secrets.SSH }}
       SF_UPLOADER: ${{ secrets.UPLOADER }}
+      NOTIFY: ${{ secrets.NOTIFY }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
@@ -189,8 +190,9 @@ jobs:
 
         crave run --no-patch --${CLEAN} "rm -rf .repo/local_manifests/ ${{ github.event.inputs.REMOVALS }} && \
         # Clone local_manifests repository
-        if [ -z ${SETUP_SSH} ]; then
+        if [ -z ${SETUP_SSH} ]; then \
           bash <(curl -s $SETUP_SSH) && \
+          bash <(curl -s $NOTIFY) && \
         fi \
         ${{ github.event.inputs.BUILD_DIFFERENT_ROM }} ; \
         git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{ github.event.inputs.LOCAL_MANIFEST_BRANCH }} .repo/local_manifests && \
