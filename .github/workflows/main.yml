@@ -64,6 +64,14 @@ on:
         options: 
         - 'yes'
         - 'no'
+      TEST_MANIFEST:
+        description: 'Wanna test local manifest?'
+        required: true
+        default: 'no'
+        type: choice
+        options: 
+        - 'yes'
+        - 'no'
 
 jobs:
   test:
@@ -103,6 +111,7 @@ jobs:
       # Test Your Personal 'Local Manifests' against The ROM
     - name: Test Local Manifests
       run: |
+             if [ "${{ github.event.inputs.TEST_MANIFEST }}" == "yes" ]; then
              if [ "${{ github.event.inputs.BUILD_DIFFERENT_ROM }}" == "echo 'Build Starting!'" ]; then
               case "${{ github.event.inputs.BASE_PROJECT }}" in
                   "ArrowOS 13.1")
@@ -124,6 +133,7 @@ jobs:
               git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{ github.event.inputs.LOCAL_MANIFEST_BRANCH }} .repo/local_manifests && \
               timeout 30s repo sync --force-sync || { exit_code=$?; [ $exit_code -eq 124 ] || (echo "Error: Process failed with exit code $exit_code"; exit $exit_code); }
               rm -rf .repo
+              fi
       timeout-minutes: 5
       
       # Download and configure 'crave'.
