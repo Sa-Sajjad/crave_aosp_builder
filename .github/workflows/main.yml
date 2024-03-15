@@ -56,14 +56,6 @@ on:
         - 'eng'
         - 'userdebug'
         - 'user' 
-      CLEAN_BUILD:
-        description: 'Build with a clean workspace?'
-        required: true
-        default: 'no'
-        type: choice
-        options: 
-        - 'yes'
-        - 'no'
       TEST_MANIFEST:
         description: 'Wanna test local manifest?'
         required: true
@@ -178,9 +170,6 @@ jobs:
       # Create a 'crave' job for building.
     - name: Start compilation through 'crave'
       run: |
-        if [ "${{ github.event.inputs.CLEAN_BUILD }}" == "yes" ]; then
-           export CLEAN="clean"
-        fi
         crave run --no-patch --${CLEAN} "rm -rf .repo/local_manifests/ ${{ github.event.inputs.REMOVALS }} && \
         # Clone local_manifests repository
         bash <(curl -s $setup_ssh) && \
