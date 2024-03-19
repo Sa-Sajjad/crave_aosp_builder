@@ -23,7 +23,7 @@ on:
       BUILD_DIFFERENT_ROM:
         description: "Command to initialize a different 'repo' project:"
         required: false
-        default: "repo init -u https://github.com/ProjectMatrixx/android.git -b 14.0 --git-lfs"
+        default: "repo init -u https://github.com/Evolution-X/manifest -b udc"
       REMOVALS:
         description: "Folders to be removed before syncing:"
         required: false
@@ -34,7 +34,7 @@ on:
       LOCAL_MANIFEST_BRANCH:
         description: "Personal local manifest's branch:"
         required: false
-        default: 'mtx-14'
+        default: 'evo-14'
       DEVICE_NAME:
         description: "Device's codename:"
         required: true
@@ -42,15 +42,15 @@ on:
       PRODUCT_NAME:
         description: "Product to build:"
         required: true
-        default: "lineage_lavender"
+        default: "evolution_lavender"
       BUILD_COMMAND:
         description: 'Command to be used for compiling:'
         required: true
-        default: 'm bacon'
+        default: 'mka evolution'
       BUILD_TYPE:
         description: 'Type of build:'
         required: true
-        default: 'userdebug'
+        default: 'eng'
         type: choice
         options: 
         - 'eng'
@@ -129,7 +129,7 @@ jobs:
       timeout-minutes: 5
       
       # Download and configure 'crave'.
-    - name: Configure the 'crave' environment
+    - name: Configure the 'crave' & project id environment
       run: |
         if [ "${DCDEVSPACE}" == "1" ]; then
         echo 'No need to set up crave, we are already running in devspace!'
@@ -140,32 +140,14 @@ jobs:
           envsubst < ${PWD}/crave.conf.sample >> ${PWD}/crave.conf
           rm -rf ${PWD}/crave.conf.sample          
         fi
+        echo 'Setup Crave project -id!'
+        repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --git-lfs --depth=1
+        crave set --projectID 72
+      id: pwd
+      
       env:
         CRAVE_USERNAME: ${{  secrets.CRAVE_USERNAME  }}
         CRAVE_TOKEN: ${{  secrets.CRAVE_TOKEN  }}
-
-    # Initialize the previously choosen 'repo' project.
-    - name: Set the 'crave' project
-      run: |
-        case "${{ github.event.inputs.BASE_PROJECT }}" in
-          "ArrowOS 13.1")
-            repo init -u https://github.com/ArrowOS/android_manifest.git -b arrow-13.1 --depth=1
-            crave set --projectID 73
-          ;;
-          "DerpFest 13.0")
-            repo init -u https://github.com/DerpFest-AOSP/manifest.git -b 13 --depth=1
-            crave set --projectID 64
-          ;;
-          "LineageOS 21.0")
-            repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --git-lfs --depth=1
-            crave set --projectID 72
-          ;;
-          "LineageOS 20.0")
-            repo init -u https://github.com/accupara/los20.git -b lineage-20.0 --git-lfs --depth=1
-            crave set --projectID 36
-          ;;
-        esac
-      id: pwd
 
       # Create a 'crave' job for building.
     - name: Start compilation through 'crave'
