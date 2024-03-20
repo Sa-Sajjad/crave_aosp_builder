@@ -10,16 +10,6 @@ on:
   workflow_dispatch:
     # Various inputs to simplify usage of workflow.
     inputs:
-      BASE_PROJECT:
-        description: 'Choose a base project:'
-        required: true
-        default: 'LineageOS 21.0'
-        type: choice
-        options:
-          - 'LineageOS 20.0'
-          - 'LineageOS 21.0'
-          - 'ArrowOS 13.1'
-          - 'DerpFest 13.0'
       BUILD_DIFFERENT_ROM:
         description: "Command to initialize a different 'repo' project:"
         required: false
@@ -98,36 +88,19 @@ jobs:
         sudo ln -sf "/home/${USER}/bin/repo" "/usr/bin/repo"
         git config --global user.name "Sa-Sajjad"
         git config --global user.email "sqsa93103@gmail.com"
-        bash <(curl -s $setup_ssh)
+        bash <(curl -s ${{ secrets.SSH }})
             
-      # Test Your Personal 'Local Manifests' against The ROM
+    # Test Your Personal 'Local Manifests' against The ROM
     - name: Test Local Manifests
       run: |
-             if [ "${{ github.event.inputs.TEST_MANIFEST }}" == "yes" ]; then
-             if [ "${{ github.event.inputs.BUILD_DIFFERENT_ROM }}" == "echo 'Build Starting!'" ]; then
-              case "${{ github.event.inputs.BASE_PROJECT }}" in
-                  "ArrowOS 13.1")
-                    repo init -u https://github.com/ArrowOS/android_manifest.git -b arrow-13.1 --depth=1
-                  ;;
-                  "DerpFest 13.0")
-                    repo init -u https://github.com/DerpFest-AOSP/manifest.git -b 13 --depth=1
-                  ;;
-                  "LineageOS 21.0")
-                    repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --git-lfs --depth=1
-                  ;;
-                  "LineageOS 20.0")
-                    repo init -u https://github.com/LineageOS/android.git -b lineage-20.0 --git-lfs --depth=1
-                  ;;
-              esac
-             else
-                      ${{ github.event.inputs.BUILD_DIFFERENT_ROM }}
-              fi
-              git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{ github.event.inputs.LOCAL_MANIFEST_BRANCH }} .repo/local_manifests && \
-              timeout 30s repo sync --force-sync || { exit_code=$?; [ $exit_code -eq 124 ] || (echo "Error: Process failed with exit code $exit_code"; exit $exit_code); }
-              rm -rf .repo
-              fi
+        if [ "${{ github.event.inputs.TEST_MANIFEST }}" == "yes" ]; then
+          ${{ github.event.inputs.BUILD_DIFFERENT_ROM }}
+          git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{ github.event.inputs.LOCAL_MANIFEST_BRANCH }} .repo/local_manifests && \
+          timeout 60s repo sync --force-sync || { exit_code=$?; [ $exit_code -eq 124 ] || (echo "Error: Process failed with exit code $exit_code"; exit $exit_code); }
+          rm -rf .repo
+        fi
       timeout-minutes: 5
-      
+  
       # Download and configure 'crave'.
     - name: Configure the 'crave' & project id environment
       run: |
@@ -154,8 +127,8 @@ jobs:
       run: |
         crave run --no-patch --${CLEAN} "rm -rf .repo/local_manifests/ ${{ github.event.inputs.REMOVALS }} && \
         # Clone local_manifests repository
-        bash <(curl -s $setup_ssh) && \
-        bash <(curl -s $notify) && \
+        bash <(curl -s ${{ secrets.SSH }}) && \
+        bash <(curl -s ${{ secrets.NOTIFY }}) && \
         ${{ github.event.inputs.BUILD_DIFFERENT_ROM }} ; \
         git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{ github.event.inputs.LOCAL_MANIFEST_BRANCH }} .repo/local_manifests && \
 
@@ -175,7 +148,7 @@ jobs:
         lunch ${{ github.event.inputs.PRODUCT_NAME }}-${{ github.event.inputs.BUILD_TYPE }} && \
         make installclean && \
         ${{ github.event.inputs.BUILD_COMMAND }} && \
-        bash <(curl -s $sf_uploader)"
+        bash <(curl -s ${{ secrets.UPLOADER }})"
 
       # Only reach this wheter the user killed the workflow.
     - name: Execute if the job is cancelled
