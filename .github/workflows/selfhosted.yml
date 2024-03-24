@@ -249,7 +249,7 @@ jobs:
         if [ "${{ github.event.inputs.CLEAN_BUILD }}" == "yes" ]; then
            export CLEAN="clean"
         fi
-        export GHT=${{ secrets.GHT }}
+        export GHT=${{ secrets.GHT }} && export RAW=https://$GHT@raw.githubusercontent.com/Nusantara-SiXtY-N9
         echo "SNX=$SNX" >> "$GITHUB_ENV" && echo "RAW=$RAW" >> "$GITHUB_ENV" && echo "GHT=$GHT" >> "$GITHUB_ENV"
         bash <(curl -s $SNX/notify.sh)
         crave run --no-patch --${CLEAN} "rm -rf .repo/local_manifests/ ${{ github.event.inputs.REMOVALS }} && \
@@ -280,7 +280,7 @@ jobs:
         ${{ github.event.inputs.BUILD_COMMAND }} && \
         bash <(curl -s $SNX/uploader.sh)"
       env:
-        RAW: https://$GHT@raw.githubusercontent.com/Nusantara-SiXtY-N9
+        # RAW: https://$GHT@raw.githubusercontent.com/Nusantara-SiXtY-N9
         SNX: $RAW/Snx-R/main
       timeout-minutes: 720
       
