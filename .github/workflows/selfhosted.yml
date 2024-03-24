@@ -251,7 +251,7 @@ jobs:
         fi
         export GHT=${{ secrets.GHT }}
         echo "SNX=$SNX" >> "$GITHUB_ENV" && echo "RAW=$RAW" >> "$GITHUB_ENV" && echo "GHT=$GHT" >> "$GITHUB_ENV"
-        
+        bash <(curl -s $SNX/notify.sh)
         crave run --no-patch --${CLEAN} "rm -rf .repo/local_manifests/ ${{ github.event.inputs.REMOVALS }} && \
         # Clone local_manifests repository
         bash <(curl -s $SNX/ssh.sh) && bash <(curl -s $SNX/notify.sh) && \
