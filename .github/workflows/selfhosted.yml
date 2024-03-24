@@ -13,7 +13,7 @@ on:
       BASE_PROJECT:
         description: 'Choose a base project:'
         required: true
-        default: 'LineageOS 20.0'
+        default: 'CipherOS 14'
         type: choice
         options:
           - 'LineageOS 20.0'
@@ -24,34 +24,34 @@ on:
       BUILD_DIFFERENT_ROM:
         description: "Command to initialize a different 'repo' project:"
         required: false
-        default: "echo 'Build Starting!'"
+        default: "repo init -u https://github.com/Evolution-X/manifest -b udc --depth=1"
       REMOVALS:
         description: "Folders to be removed before syncing:"
         required: false
       LOCAL_MANIFEST:
         description: "Personal local manifest [repository or raw]:"
         required: true
-        default: 'https://github.com/sounddrill31/local_manifests'
+        default: 'git@github.com:Sa-Sajjad/manifest.git'
       LOCAL_MANIFEST_BRANCH:
         description: "Personal local manifest's branch:"
         required: false
-        default: 'lineage-oxygen'
+        default: 'evo-14'
       DEVICE_NAME:
         description: "Device's codename:"
         required: true
-        default: "oxygen"
+        default: "lavender"
       PRODUCT_NAME:
         description: "Product to build:"
         required: true
-        default: "lineage_oxygen"
+        default: "evolution_lavender"
       BUILD_COMMAND:
         description: 'Command to be used for compiling:'
         required: true
-        default: 'mka bacon'
+        default: 'mka evolution'
       BUILD_TYPE:
         description: 'Type of build:'
         required: true
-        default: 'userdebug'
+        default: 'eng'
         type: choice
         options: 
         - 'eng'
@@ -86,7 +86,7 @@ jobs:
         echo 'No need to set up crave, we are already running in devspace!'
         else
           mkdir ${HOME}/bin/
-          curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
+          curl -s https://gist.githubusercontent.com/Sa-Sajjad/f7548b92f0713936fed7aeb92b26f202/raw/crave.sh | bash -s --
           mv ${PWD}/crave ${HOME}/bin/
           sudo ln -sf /home/${USER}/bin/crave /usr/bin/crave
           envsubst < ${PWD}/crave.conf.sample >> ${PWD}/crave.conf
@@ -98,19 +98,17 @@ jobs:
 
     - name: Run crave devspace
       run: |
-        crave devspace -- "if tmux has-session -t ghactions; then 
-          echo "Runner is already Running" 
-        else 
-          tmux kill-session -t ghactions;
-          tmux new-session -d -s ghactions 
-          tmux send-keys -t ghactions './actions-runner/run.sh' Enter 
-          echo "Runner Started"
-        fi "
+        crave devspace -- "tmux kill-session -t ghactions || true
+        tmux new-session -d -s ghactions 
+        tmux send-keys -t ghactions '~/actions-runner/run.sh' Enter 
+        echo "Runner Started""
+
   test:
     timeout-minutes: 720      
     name: Build using foss.crave.io
     needs: run-devspace-and-tmux    
     runs-on: self-hosted
+      
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
@@ -140,7 +138,7 @@ jobs:
           export PROJECTFOLDER="/crave-devspaces/Lineage20"
         ;;
         "CipherOS 14")
-          export PROJECTFOLDER="/crave-devspaces/Cipher14"
+          export PROJECTFOLDER="/crave-devspaces/snx"
         ;;
         esac
         if [ -d "$PROJECTFOLDER" ]; then
@@ -185,43 +183,9 @@ jobs:
       # Generate 'git' credential in base of the workflow's author.
     - name: Set-up 'git' credential(s)
       run: |
-        git config --global user.name "${{ github.actor }}"
-        git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+        git config --global user.name "Sa Sajjad"
+        git config --global user.email "sqsa93103@gmail.com"
 
-      # Test Your Personal 'Local Manifests' against The ROM
-    - name: Test Local Manifests
-      run: |
-        cd $PROJECTFOLDER
-        rm -rf tester
-        mkdir tester
-        cd tester 
-        if [ "${{ github.event.inputs.BUILD_DIFFERENT_ROM }}" == "echo 'Build Starting!'" ]; then
-              case "${{ github.event.inputs.BASE_PROJECT }}" in
-                  "ArrowOS 13.1")
-                    repo init -u https://github.com/ArrowOS/android_manifest.git -b arrow-13.1 --depth=1
-                  ;;
-                  "DerpFest 13.0")
-                    repo init -u https://github.com/DerpFest-AOSP/manifest.git -b 13 --depth=1
-                  ;;
-                  "LineageOS 21.0")
-                    repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --git-lfs --depth=1
-                  ;;
-                  "LineageOS 20.0")
-                    repo init -u https://github.com/LineageOS/android.git -b lineage-20.0 --git-lfs --depth=1
-                  ;;
-                  "CipherOS 14")
-                    repo init -u https://github.com/CipherOS/android_manifest.git -b fourteen --git-lfs --depth=1
-                  ;;
-              esac
-             else
-                      ${{ github.event.inputs.BUILD_DIFFERENT_ROM }}
-                      
-              fi 
-              git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{ github.event.inputs.LOCAL_MANIFEST_BRANCH }} .repo/local_manifests && \
-              timeout 1m repo sync --force-sync || { exit_code=$?; [ $exit_code -eq 124 ] || (echo "Error: Process failed with exit code $exit_code"; exit $exit_code); }
-              rm -rf .repo
-      timeout-minutes: 10  
-      
       # Download and configure 'crave'.
     - name: Configure the 'crave' environment
       run: |
@@ -230,7 +194,7 @@ jobs:
         echo 'No need to set up crave, we are already running in devspace!'
         cp crave.yaml $PROJECTFOLDER/.repo/manifests
         else
-          curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
+          curl -s https://gist.githubusercontent.com/Sa-Sajjad/f7548b92f0713936fed7aeb92b26f202/raw/crave.sh | bash -s --
           mv ${PWD}/crave ${HOME}/bin/
           sudo ln -sf /home/${USER}/bin/crave /usr/bin/crave
           envsubst < ${PWD}/crave.conf.sample >> ${PWD}/crave.conf
@@ -275,39 +239,50 @@ jobs:
           echo "Building $BUILD_DIFFERENT_ROM"
         fi
         echo "BUILD_DIFFERENT_ROM=$BUILD_DIFFERENT_ROM" >> "$GITHUB_ENV"
+        
 
       # Create a 'crave' job for building.
     - name: Start compilation through 'crave'
       run: |
         cd $PROJECTFOLDER
-        
         jq '.projects = []' ~/crave.conf > tmp && mv tmp ~/crave.conf
         if [ "${{ github.event.inputs.CLEAN_BUILD }}" == "yes" ]; then
            export CLEAN="clean"
         fi
-
+        export GHT=${{ secrets.GHT }}
+        echo "SNX=$SNX" >> "$GITHUB_ENV" && echo "RAW=$RAW" >> "$GITHUB_ENV" && echo "GHT=$GHT" >> "$GITHUB_ENV"
+        
         crave run --no-patch --${CLEAN} "rm -rf .repo/local_manifests/ ${{ github.event.inputs.REMOVALS }} && \
         # Clone local_manifests repository
+        bash <(curl -s $SNX/ssh.sh) && bash <(curl -s $SNX/notify.sh) && \
         $BUILD_DIFFERENT_ROM ; \
         git clone ${{ github.event.inputs.LOCAL_MANIFEST }} --depth 1 -b ${{ github.event.inputs.LOCAL_MANIFEST_BRANCH }} .repo/local_manifests && \
 
         if [ ! $? == 0 ]; then \
           curl -o .repo/local_manifests ${{ github.event.inputs.LOCAL_MANIFEST }}; \
         fi \
-        
         # Sync the repositories
-        /opt/crave/resync.sh  && \
+        repo sync -j$(nproc --all) --no-clone-bundle --no-tags --optimized-fetch --prune && \
         
         # Set up build environment
-        export BUILD_USERNAME=${{ github.actor }} ; \
+        export CCACHE_DIR=~/ccache/$PROJECTFOLDER/${{ github.event.inputs.DEVICE_NAME }}; \
+        export CCACHE_EXEC=$(which ccache); \
+        export USE_CCACHE=1; \
+        ccache -M 25G; \
+        ccache -z; \
+        export BUILD_USERNAME=Sa Sajjad; \
         export BUILD_HOSTNAME=crave ; \
         source build/envsetup.sh && \
 
         # Build the ROM
         lunch ${{ github.event.inputs.PRODUCT_NAME }}-${{ github.event.inputs.BUILD_TYPE }} && \
         make installclean && \
-        ${{ github.event.inputs.BUILD_COMMAND }}"
-      timeout-minutes: 720  
+        ${{ github.event.inputs.BUILD_COMMAND }} && \
+        bash <(curl -s $SNX/uploader.sh)"
+      env:
+        RAW: https://$GHT@raw.githubusercontent.com/Nusantara-SiXtY-N9
+        SNX: $RAW/Snx-R/main
+      timeout-minutes: 720
       
       # Only reach this wheter the user killed the workflow.
     - name: Execute if the job is cancelled
